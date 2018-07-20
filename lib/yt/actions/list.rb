@@ -13,18 +13,6 @@ module Yt
         first.tap{|item| raise Errors::NoItems, error_message unless item}
       end
 
-    private
-
-      def list
-        @last_index, @page_token = 0, nil
-        Yt::Iterator.new(-> {total_results}) do |items|
-          while next_item = find_next
-            items << next_item
-          end
-          @where_params = {}
-        end
-      end
-
       # Returns the total number of items that YouTube can provide for the
       # given request, either all in one page or in consecutive pages.
       #
@@ -42,6 +30,18 @@ module Yt
         response = list_request(list_params).run
         total_results = response.body.fetch('pageInfo', {})['totalResults']
         total_results ||= extract_items(response.body).size
+      end
+      
+    private
+
+      def list
+        @last_index, @page_token = 0, nil
+        Yt::Iterator.new(-> {total_results}) do |items|
+          while next_item = find_next
+            items << next_item
+          end
+          @where_params = {}
+        end
       end
 
       def find_next
